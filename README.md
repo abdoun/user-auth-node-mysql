@@ -20,7 +20,7 @@ An API backend example by Node and Mysql of Users table including register, logi
   ```
 - **Production mode**:
   ```bash
-  node index.js
+  node src/server.js
   ```
 
 ### Building the Project
