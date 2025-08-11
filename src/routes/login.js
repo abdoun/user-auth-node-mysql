@@ -3,14 +3,14 @@ require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('./db');
+const pool = require('../db');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
-const SECRET_KEY = process.env.SECRET_KEY || 'changeme';
+const SECRET_KEY = process.env.JWT_SECRET || 'changeme';
 
 router.post(
-  '/login',
+  '/',
   [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),

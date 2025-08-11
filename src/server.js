@@ -2,27 +2,28 @@ require('dotenv').config();
 const express = require('express');
 const pool = require('./db'); // import the pool
 const { body, validationResult } = require('express-validator');
-const registerRouter = require('./register');
-const authenticateToken = require('./middleware/auth');
-const loginRouter = require('./login');
+const registerRouter = require('./routes/register');
+
+const loginRouter = require('./routes/login');
+const profileRouter = require('./routes/profile');
 const cors = require('cors');
 
 
+const dotenv = require('dotenv');
 
-const app = express();
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
+console.log('JWT_SECRET:', process.env.JWT_SECRET);  // For debugging
+
+const app = require('./app');
 app.use(cors());
 app.use(express.json());
-app.use('/register', registerRouter);
+app.use('/', registerRouter);
 app.use('/', loginRouter);
+app.use('/', profileRouter);
 
 
-// Example profile route (protected)
-app.get('/profile', authenticateToken, (req, res) => {
-  res.json({
-    message: 'This is your profile',
-    user: req.user
-  });
-});
+
 
 // ✅ CREATE
 app.post(
@@ -119,4 +120,8 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('🚀 Server on http://localhost:3000'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
