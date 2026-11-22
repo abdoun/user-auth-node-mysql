@@ -4,10 +4,19 @@ const db = require('../../src/db'); // ✅ import the DB connection
 
 
 describe('Auth API', () => {
+  beforeAll(async () => {
+    await db.execute('DELETE FROM users WHERE email = ?', ['test@example.com']);
+  });
+
+  afterAll(async () => {
+    await db.execute('DELETE FROM users WHERE email = ?', ['test@example.com']);
+    await db.end();
+  });
+
   test('POST /register should create user', async () => {
     const res = await request(app)
       .post('/register')
-      .send({ name: 'Test', email: 'test@example.com', password: 'secret' });
+      .send({ name: 'Test', email: 'test@example.com', password: 'Secret123' });
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('token');
@@ -17,11 +26,11 @@ describe('Auth API', () => {
     // Register first
     await request(app)
       .post('/register')
-      .send({ name: 'Test', email: 'test@example.com', password: 'secret' });
+      .send({ name: 'Test', email: 'test@example.com', password: 'Secret123' });
 
     const res = await request(app)
       .post('/login')
-      .send({ email: 'test@example.com', password: 'secret' });
+      .send({ email: 'test@example.com', password: 'Secret123' });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('token');

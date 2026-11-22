@@ -1,4 +1,9 @@
-require('dotenv').config({ path: `.env${process.env.NODE_ENV ? `.${process.env.NODE_ENV}` : ''}` });
+const envFile = process.env.NODE_ENV === 'test'
+  ? '.env.test'
+  : process.env.NODE_ENV === 'production'
+    ? '.env.docker'
+    : '.env';
+require('dotenv').config({ path: envFile, quiet: true });
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({

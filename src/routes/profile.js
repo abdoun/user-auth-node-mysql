@@ -1,5 +1,3 @@
-// login.js
-require('dotenv').config();
 const express = require('express');
 const authenticateToken = require('../middleware/auth');
 
