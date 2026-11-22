@@ -1,0 +1,70 @@
+
+name: Deploy User Auth API
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: user-auth-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create environment file
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+        run: |
+          set -eu
+          umask 077
+
+          cat > .env <<EOF
+          MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+          DB_USER=${DB_USER}
+          DB_PASS=${DB_PASS}
+          DB_NAME=${DB_NAME}
+          JWT_SECRET=${JWT_SECRET}
+          CORS_ORIGIN=${CORS_ORIGIN}
+          EOF
+
+      - name: Validate Compose configuration
+        run: docker compose config -q
+
+      - name: Build and deploy
+        run: |
+          docker compose up -d --build --remove-orphans
+
+      - name: Check containers
+        run: |
+          docker compose ps
+          docker compose logs --tail=50 app
+
+      - name: Verify API
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3002/; then
+              echo "API is responding"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "API did not become ready"
+          docker compose logs --tail=100
+          exit 1

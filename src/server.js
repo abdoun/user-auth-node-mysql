@@ -19,10 +19,9 @@ const profileRoute = require('./routes/profile');
 
 
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3003',
   credentials: true
 }));
-
 app.use(express.json());
 
 app.get('/', (req, res) => res.send('API running'));
