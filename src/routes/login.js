@@ -7,7 +7,11 @@ const pool = require('../db');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
-const SECRET_KEY = process.env.JWT_SECRET || 'changeme';
+const SECRET_KEY = process.env.JWT_SECRET;
+
+if (!SECRET_KEY) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 router.post(
   '/',
