@@ -1,26 +1,36 @@
-require('dotenv').config();
+
 const express = require('express');
-const pool = require('./db'); // import the pool
-const { body, validationResult } = require('express-validator');
-const registerRouter = require('./routes/register');
-
-const loginRouter = require('./routes/login');
-const profileRouter = require('./routes/profile');
-const cors = require('cors');
-
-
+const app = express();
 const dotenv = require('dotenv');
 
 const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
 dotenv.config({ path: envFile });
-console.log('JWT_SECRET:', process.env.JWT_SECRET);  // For debugging
 
-const app = require('./app');
-app.use(cors());
+const pool = require('./db'); // import the pool
+const { body, validationResult } = require('express-validator');
+
+require('dotenv').config({ quiet: true }); // suppress .env logs in test
+
+const cors = require('cors');
+
+const registerRoute = require('./routes/register');
+const loginRoute = require('./routes/login');
+const profileRoute = require('./routes/profile');
+
+
+app.use(cors({
+  origin: 'http://localhost:3001',
+  credentials: true
+}));
+
 app.use(express.json());
-app.use('/', registerRouter);
-app.use('/', loginRouter);
-app.use('/', profileRouter);
+
+app.get('/', (req, res) => res.send('API running'));
+
+// Mount routes
+app.use('/register', registerRoute);
+app.use('/login', loginRoute);
+app.use('/profile', profileRoute);
 
 
 
