@@ -18,8 +18,23 @@ const loginRoute = require('./routes/login');
 const profileRoute = require('./routes/profile');
 
 
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3004',
+  origin: (origin, callback) => {
+    // Allow requests without an Origin header (curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow configured frontend origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
