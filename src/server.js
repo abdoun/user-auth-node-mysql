@@ -26,35 +26,36 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .map(origin => origin.trim())
   .filter(Boolean);
 
-  console.log('Allowed CORS origins:', allowedOrigins);
+console.log('Allowed CORS origins:', allowedOrigins);
 
+// Log requests and validate their origins
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`,
+    'Origin:', origin
+  );
 
   if (!origin || allowedOrigins.includes(origin)) {
     return next();
   }
+
+  console.log('Blocked CORS origin:', origin);
 
   return res.status(403).json({
     error: 'Origin not allowed'
   });
 });
 
+// Configure CORS
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
 }));
 
+// Parse JSON request bodies
 app.use(express.json());
-
-app.use((req, res, next) => {
-  console.log(
-    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`,
-    'Origin:', req.headers.origin
-  );
-
-  next();
-});
 
 app.get('/', (req, res) => res.send('API running'));
 
