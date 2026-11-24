@@ -26,21 +26,35 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .map(origin => origin.trim())
   .filter(Boolean);
 
+  console.log('Allowed CORS origins:', allowedOrigins);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (!origin || allowedOrigins.includes(origin)) {
+    return next();
+  }
+
+  return res.status(403).json({
+    error: 'Origin not allowed'
+  });
+});
+
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests without an Origin header (curl, server-to-server)
-    if (!origin) return callback(null, true);
-
-    // Allow configured frontend origins
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: allowedOrigins,
   credentials: true
 }));
+
 app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`,
+    'Origin:', req.headers.origin
+  );
+
+  next();
+});
 
 app.get('/', (req, res) => res.send('API running'));
 

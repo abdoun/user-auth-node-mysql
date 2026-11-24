@@ -134,8 +134,99 @@ CREATE TABLE `users` (
 - `GET /profile` — Get authenticated user's profile (JWT required)
 
 ### Users CRUD
-- `POST /users` — Create a new user
 - `GET /users` — List users (supports `page` and `limit` query params)
 - `GET /users/:id` — Get user by ID
 - `PUT /users/:id` — Update user by ID
 - `DELETE /users/:id` — Delete user by ID
+
+## 🧪 cURL Examples
+
+Set the API base URL for local development (use `http://localhost:3002` when using Docker Compose):
+
+```bash
+export BASE_URL=http://localhost:3000
+```
+
+### Register a user
+
+```bash
+curl -i -X POST "$BASE_URL/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "Secret123"
+  }'
+```
+
+The registration response contains a JWT token. To save it for subsequent requests:
+
+```bash
+export TOKEN=$(curl -s -X POST "$BASE_URL/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "Secret123"
+  }' | node -e "let data=''; process.stdin.on('data', chunk => data += chunk).on('end', () => console.log(JSON.parse(data).token || ''))")
+```
+
+### Login
+
+```bash
+curl -i -X POST "$BASE_URL/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "Secret123"
+  }'
+```
+
+You can also save the login token as an environment variable:
+
+```bash
+export TOKEN=$(curl -s -X POST "$BASE_URL/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "Secret123"
+  }' | node -e "let data=''; process.stdin.on('data', chunk => data += chunk).on('end', () => console.log(JSON.parse(data).token || ''))")
+```
+
+### Get the authenticated profile
+
+```bash
+curl -i "$BASE_URL/profile" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### List users
+
+The current implementation only lists the authenticated user:
+
+```bash
+curl -i "$BASE_URL/users?page=1&limit=10" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Get, update, or delete a user
+
+Replace `USER_ID` with the ID returned by login or profile:
+
+```bash
+export USER_ID=1
+
+curl -i "$BASE_URL/users/$USER_ID" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -i -X PUT "$BASE_URL/users/$USER_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Smith",
+    "email": "john.smith@example.com"
+  }'
+
+curl -i -X DELETE "$BASE_URL/users/$USER_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
