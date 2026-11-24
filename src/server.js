@@ -56,7 +56,10 @@ app.use(cors({
 
 // Parse JSON request bodies
 app.use(express.json());
+// tells Express to trust one proxy hop when interpreting forwarded client information
+app.set('trust proxy', 1);
 
+// Test route
 app.get('/', (req, res) => res.send('API running'));
 
 // Mount routes
