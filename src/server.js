@@ -11,6 +11,7 @@ const envFile = process.env.NODE_ENV === 'test'
 dotenv.config({ path: envFile, quiet: true });
 
 const pool = require('./db'); // import the pool
+const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 
 const cors = require('cors');
@@ -150,6 +151,56 @@ app.put(
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Failed to update user' });
+    }
+  }
+);
+
+// ✅ CHANGE PASSWORD (own account)
+app.put(
+  '/users/:id/password',
+  authenticateToken,
+  [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8, max: 128 })
+      .withMessage('New password must be between 8 and 128 characters'),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      if (Number(req.params.id) !== Number(req.user.id)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const [rows] = await pool.execute(
+        'SELECT password FROM users WHERE id = ?',
+        [req.params.id]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const match = await bcrypt.compare(
+        req.body.currentPassword,
+        rows[0].password
+      );
+      if (!match) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      const hashedPassword = await bcrypt.hash(req.body.newPassword, 12);
+      await pool.execute('UPDATE users SET password = ? WHERE id = ?', [
+        hashedPassword,
+        req.params.id,
+      ]);
+      res.json({ message: 'Password changed' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to change password' });
     }
   }
 );
